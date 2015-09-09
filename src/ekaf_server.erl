@@ -384,7 +384,7 @@ handle_info({worker, up, WorkerUp, WorkerUpStateName, WorkerUpState, _}, StateNa
             ok
     end,
 
-    case ekaf_callbacks:find(?EKAF_CALLBACK_WORKER_UP) of
+    case ekaf_callbacks:find(?EKAF_CALLBACK_WORKER_UP_ATOM) of
         {Mod,Func} ->
             Mod:Func(?EKAF_CALLBACK_WORKER_UP, WorkerUp, WorkerUpStateName, WorkerUpState, undefined);
         _ ->
