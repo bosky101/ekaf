@@ -84,6 +84,8 @@ pick_test_() ->
              ok
      end,
      [
+       {timeout, 5, ?_test(?debugVal(t_reading_topic_specific_envs()))}
+      , ?_test(t_is_clean())
        {timeout, 5, ?_test(?debugVal(t_pick_from_new_pool()))}
       , ?_test(t_is_clean())
       , {spawn, ?_test(?debugVal(t_request_metadata()))}
@@ -118,6 +120,32 @@ pick_test_() ->
       ,{spawn, ?_test(?debugVal(t_massage_buffer_encode_messages_as_one_large_message()))}
       , ?_test(t_is_clean())
       ]}}.
+
+t_reading_topic_specific_envs()->
+    Topic = ?TEST_TOPIC,
+    application:set_env(ekaf, ?EKAF_MASSAGE_BUFFER_ATOM, {mod,func}),
+    ?assertMatch({mod,func},
+                 ekaf_lib:get_default(Topic, ?EKAF_MASSAGE_BUFFER_ATOM, undefined)),
+
+    application:set_env(ekaf, ?EKAF_MASSAGE_BUFFER_ATOM, [{<<"topic1">>, {mod,func1}},
+                                                          {<<"topic2">>, {mod,func2}}]),
+    ?assertMatch(undefined,
+                 ekaf_lib:get_default(Topic, ?EKAF_MASSAGE_BUFFER_ATOM, undefined)),
+    ?assertMatch({mod,func1},
+                 ekaf_lib:get_default(<<"topic1">>, ?EKAF_MASSAGE_BUFFER_ATOM, undefined)),
+    ?assertMatch({mod,func2},
+                 ekaf_lib:get_default(<<"topic2">>, ?EKAF_MASSAGE_BUFFER_ATOM, undefined)),
+
+    application:set_env(ekaf, ?EKAF_MASSAGE_BUFFER_ATOM, [{Topic, {mod,func1}},
+                                                          {<<"topic2">>, {mod,func2}},
+                                                          {?EKAF_MASSAGE_BUFFER_ATOM,{mod,func3}}]),
+    ?assertMatch({mod,func1},
+                 ekaf_lib:get_default(Topic, ?EKAF_MASSAGE_BUFFER_ATOM, undefined)).
+    ?assertMatch(undefined,
+                 ekaf_lib:get_default(<<"topic1">>, ?EKAF_MASSAGE_BUFFER_ATOM, undefined)),
+    ?assertMatch({mod,func2},
+                 ekaf_lib:get_default(<<"topic2">>, ?EKAF_MASSAGE_BUFFER_ATOM, undefined)).
+
 
 t_pick_from_new_pool()->
     Topic = ?TEST_TOPIC,
